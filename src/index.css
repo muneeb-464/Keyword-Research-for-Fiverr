@@ -1,0 +1,31 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Dark theme */
+body.dark  { background: #0f172a; color: #e2e8f0; }
+body.light { background: #f1f5f9; color: #0f172a; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+
+/* Input autofill fix */
+input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #1e293b inset !important; -webkit-text-fill-color: #e2e8f0 !important; }
+body.light input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #f8fafc inset !important; -webkit-text-fill-color: #0f172a !important; }
+
+/* Smooth transitions */
+* { transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s; }
+button { transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s; }
+button:active { transform: scale(0.97); }
+
+#root { width: 100%; min-height: 100vh; }
