@@ -70,102 +70,106 @@ export default function App() {
     { id: "market"   as Page, label: "Market Report",  icon: <BarChart2 size={16}/> },
   ];
 
-  const sidebarBg  = theme === "dark" ? "#131929" : "#f8fafc";
-  const sidebarBdr = theme === "dark" ? "#1e293b" : "#e2e8f0";
-  const mainBg     = theme === "dark" ? "#0f172a" : "#f1f5f9";
-  const footerColor = theme === "dark" ? "#475569" : "#94a3b8";
-
   const sidebarVisible = !isMobile || sidebarOpen;
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: mainBg, color: theme === "dark" ? "#e2e8f0" : "#0f172a", overflow: "hidden", fontFamily: "'Inter', system-ui, sans-serif", position: "relative" }}>
+    <div className="flex h-screen overflow-hidden relative bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-[Inter,system-ui,sans-serif]">
 
       {/* Mobile backdrop */}
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40, backdropFilter: "blur(2px)" }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         />
       )}
 
       {/* Sidebar */}
       {sidebarVisible && (
-        <aside style={{
-          width: 216, minWidth: 216, background: sidebarBg,
-          borderRight: `1px solid ${sidebarBdr}`,
-          display: "flex", flexDirection: "column", overflow: "hidden",
-          ...(isMobile ? {
-            position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 50,
-            boxShadow: "4px 0 24px rgba(0,0,0,0.3)",
-          } : {}),
-        }}>
-          <div style={{ padding: "18px 18px 14px", borderBottom: `1px solid ${sidebarBdr}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 18, fontWeight: 900, color: "#3b82f6", letterSpacing: "-0.5px" }}>KeywordPulse</span>
+        <aside className={[
+          "w-[216px] min-w-[216px] bg-slate-50 dark:bg-[#131929]",
+          "border-r border-slate-200 dark:border-slate-800",
+          "flex flex-col overflow-hidden",
+          isMobile ? "fixed top-0 left-0 bottom-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.3)]" : "",
+        ].join(" ")}>
+
+          <div className="px-[18px] pt-[18px] pb-[14px] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-[18px] font-black text-blue-500 tracking-[-0.5px]">KeywordPulse</span>
             {isMobile && (
-              <button onClick={() => setSidebarOpen(false)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", display: "flex", padding: 4 }}>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="bg-transparent border-0 cursor-pointer text-slate-500 flex p-1"
+              >
                 <X size={18} />
               </button>
             )}
           </div>
 
-          <div style={{ padding: "13px 12px 10px" }}>
-            <button onClick={newAnalysis}
-              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#3b82f6", color: "#fff", fontSize: 13, fontWeight: 700, padding: "10px 0", borderRadius: 10, border: "none", cursor: "pointer", boxShadow: "0 0 20px rgba(59,130,246,0.3)" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#2563eb"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "#3b82f6"; }}>
+          <div className="px-3 pt-[13px] pb-[10px]">
+            <button
+              onClick={newAnalysis}
+              className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white text-[13px] font-bold py-[10px] rounded-[10px] border-0 cursor-pointer shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+            >
               <Plus size={15} /> New Analysis
             </button>
           </div>
 
-          <nav style={{ padding: "4px 8px", display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+          <nav className="px-2 py-1 flex flex-col gap-[2px] flex-1">
             {sideNav.map(n => (
               <NavItem key={n.id} icon={n.icon} label={n.label} active={page === n.id} onClick={() => setPage(n.id)} theme={theme} />
             ))}
           </nav>
 
-          {/* Credit */}
-          <div style={{ padding: "12px 16px 16px", borderTop: `1px solid ${sidebarBdr}` }}>
-            <p style={{ fontSize: 10, color: footerColor, lineHeight: 1.7, textAlign: "center" }}>
+          <div className="px-4 pt-3 pb-4 border-t border-slate-200 dark:border-slate-800">
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-[1.7] text-center">
               Designed &amp; Developed by<br/>
-              <span style={{ fontWeight: 700, color: theme === "dark" ? "#64748b" : "#94a3b8" }}>Muhannad Munib Sajjad</span>
+              <span className="font-bold">Muhannad Munib Sajjad</span>
             </p>
           </div>
         </aside>
       )}
 
       {/* Main */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Topbar */}
-        <header style={{ height: 48, background: sidebarBg, borderBottom: `1px solid ${sidebarBdr}`, display: "flex", alignItems: "center", padding: "0 16px", gap: 4, flexShrink: 0 }}>
+        <header className="h-12 bg-slate-50 dark:bg-[#131929] border-b border-slate-200 dark:border-slate-800 flex items-center px-4 gap-1 shrink-0">
 
-          {/* Hamburger on mobile */}
           {isMobile && (
-            <button onClick={() => setSidebarOpen(true)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", display: "flex", padding: "4px 6px", marginRight: 6, borderRadius: 6 }}>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="bg-transparent border-0 cursor-pointer text-slate-500 flex px-[6px] py-1 mr-[6px] rounded-md"
+            >
               <Menu size={20} />
             </button>
           )}
 
           {topNav.map(n => (
             <button key={n.id} onClick={() => setPage(n.id)}
-              style={{ background: "none", border: "none", borderBottom: page === n.id ? "2px solid #3b82f6" : "2px solid transparent", cursor: "pointer", fontSize: isMobile ? 12 : 13, fontWeight: 600, color: page === n.id ? "#3b82f6" : "#64748b", padding: "0 8px", height: "100%", transition: "all 0.15s", whiteSpace: "nowrap" }}>
+              className={[
+                "bg-transparent border-b-2 cursor-pointer font-semibold px-2 h-full whitespace-nowrap transition-all duration-150",
+                isMobile ? "text-[12px]" : "text-[13px]",
+                page === n.id ? "border-blue-500 text-blue-500" : "border-transparent text-slate-500",
+              ].join(" ")}>
               {n.label}
             </button>
           ))}
 
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-            <button onClick={toggleTheme}
-              style={{ display: "flex", alignItems: "center", gap: 5, background: theme === "dark" ? "#1e293b" : "#e2e8f0", border: `1px solid ${sidebarBdr}`, borderRadius: 8, padding: isMobile ? "5px 8px" : "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: theme === "dark" ? "#94a3b8" : "#475569", whiteSpace: "nowrap" }}
-              title="Toggle theme">
-              {theme === "dark" ? <><Sun size={13}/> {!isMobile && "Light"}</> : <><Moon size={13}/> {!isMobile && "Dark"}</>}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              title="Toggle theme"
+              className="flex items-center gap-[5px] bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer text-[12px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap px-2 py-[5px] md:px-3 md:py-[6px]"
+            >
+              {theme === "dark"
+                ? <><Sun size={13}/> <span className="hidden md:inline">Light</span></>
+                : <><Moon size={13}/> <span className="hidden md:inline">Dark</span></>
+              }
             </button>
           </div>
         </header>
 
         {/* Content */}
-        <main style={{ flex: 1, overflowY: "auto", padding: isMobile ? "14px 12px" : "20px 22px" }}>
+        <main className="flex-1 overflow-y-auto p-[14px_12px] md:p-[20px_22px]">
           {page === "analyzer" && (
             <AnalyzerPage
               history={history} onSave={addRec} onDeleteRecord={delRec}
@@ -182,9 +186,9 @@ export default function App() {
           {page === "trends"  && <TrendsPage history={history} theme={theme} />}
         </main>
 
-        {/* Footer credit */}
-        <footer style={{ borderTop: `1px solid ${sidebarBdr}`, padding: "8px 20px", textAlign: "center", fontSize: 11, color: footerColor, flexShrink: 0 }}>
-          Designed &amp; Developed by <span style={{ fontWeight: 700 }}>Muhannad Munib Sajjad</span>
+        {/* Footer */}
+        <footer className="border-t border-slate-200 dark:border-slate-800 px-5 py-2 text-center text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
+          Designed &amp; Developed by <span className="font-bold">Muhannad Munib Sajjad</span>
         </footer>
 
       </div>

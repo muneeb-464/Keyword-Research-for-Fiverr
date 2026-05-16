@@ -1,6 +1,6 @@
 export function KLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: "#64748b", textTransform: "uppercase", marginBottom: 7 }}>
+    <p className="text-[11px] font-semibold tracking-[0.08em] text-slate-500 uppercase mb-[7px]">
       {children}
     </p>
   );

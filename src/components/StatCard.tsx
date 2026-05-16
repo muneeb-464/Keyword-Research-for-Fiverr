@@ -1,24 +1,32 @@
 import { fmt } from "../utils";
 import type { Theme } from "../types";
 
-export function StatCard({ label, value, accent, note, icon, theme }: {
+export function StatCard({ label, value, accent, note, icon, theme: _theme }: {
   label: string; value: number | string; accent?: boolean; note?: string;
   icon?: React.ReactNode; theme: Theme;
 }) {
-  const isGreen  = accent;
-  const bg       = isGreen ? (theme === "dark" ? "rgba(34,197,94,0.08)" : "rgba(34,197,94,0.06)") : (theme === "dark" ? "#0f172a" : "#f8fafc");
-  const border   = isGreen ? "rgba(34,197,94,0.25)" : (theme === "dark" ? "#334155" : "#e2e8f0");
-  const valColor = isGreen ? "#22c55e" : (theme === "dark" ? "#f1f5f9" : "#0f172a");
   return (
-    <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 12, padding: "14px 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "#64748b", textTransform: "uppercase" }}>{label}</p>
-        {icon && <span style={{ color: isGreen ? "#22c55e" : "#64748b", opacity: 0.7 }}>{icon}</span>}
+    <div className={[
+      "rounded-xl px-[14px] py-[10px] border",
+      accent
+        ? "bg-green-500/[0.08] border-green-500/25"
+        : "bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-700",
+    ].join(" ")}>
+      <div className="flex justify-between items-start mb-[6px]">
+        <p className="text-[10px] font-bold tracking-[0.1em] text-slate-500 uppercase">{label}</p>
+        {icon && (
+          <span className={`opacity-70 ${accent ? "text-green-500" : "text-slate-500"}`}>
+            {icon}
+          </span>
+        )}
       </div>
-      <p style={{ fontSize: 26, fontWeight: 800, color: valColor, lineHeight: 1 }}>
+      <p className={[
+        "text-[20px] font-extrabold leading-none",
+        accent ? "text-green-500" : "text-slate-900 dark:text-slate-100",
+      ].join(" ")}>
         {typeof value === "number" ? fmt(value) : value}
       </p>
-      {note && <p style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>{note}</p>}
+      {note && <p className="text-[11px] text-slate-500 mt-[6px]">{note}</p>}
     </div>
   );
 }

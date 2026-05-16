@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Star, Edit3, Trash2, FileDown } from "lucide-react";
 import { Badge }  from "../components/Badge";
-import { fmt, spoColor, card } from "../utils";
+import { fmt, spoColor } from "../utils";
 import { loadStarred, saveStarred } from "../storage";
 import type { Record_, Theme } from "../types";
 
@@ -16,11 +16,10 @@ export function QueuePage({ history, onDelete, onEdit, theme }: {
   const [editingId, setEditingId]   = useState<string | null>(null);
   const [editDraft, setEditDraft]   = useState("");
 
-  const sorted   = [...history].sort((a, b) => a.sellerPerOrder - b.sellerPerOrder);
-  const tdColor  = theme === "dark" ? "#e2e8f0" : "#0f172a";
-  const subColor = theme === "dark" ? "#94a3b8" : "#64748b";
-  const altRow   = theme === "dark" ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.015)";
-  const rowHov   = theme === "dark" ? "rgba(255,255,255,0.03)"  : "rgba(0,0,0,0.02)";
+  const sorted  = [...history].sort((a, b) => a.sellerPerOrder - b.sellerPerOrder);
+  const altRow  = theme === "dark" ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.015)";
+  const rowHov  = theme === "dark" ? "rgba(255,255,255,0.03)"  : "rgba(0,0,0,0.02)";
+  const tdColor = theme === "dark" ? "#e2e8f0" : "#0f172a";
 
   const downloadAll = () => {
     const rows = [
@@ -41,34 +40,34 @@ export function QueuePage({ history, onDelete, onEdit, theme }: {
   };
 
   return (
-    <div style={{ ...card(theme) }}>
-      <div style={{ padding: "16px 20px", borderBottom: `1px solid ${theme === "dark" ? "#334155" : "#e2e8f0"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="rounded-2xl border bg-white border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:shadow-none outline-none">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
         <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: theme === "dark" ? "#f1f5f9" : "#0f172a" }}>Order Queue</p>
-          <p style={{ fontSize: 12, color: "#64748b", marginTop: 3 }}>
+          <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100">Order Queue</p>
+          <p className="text-[12px] text-slate-500 mt-[3px]">
             All-time keywords · {history.length} total · Ranked best → worst · Never resets
           </p>
         </div>
-        <button onClick={downloadAll}
-          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "7px 14px", borderRadius: 8, border: `1px solid ${theme === "dark" ? "#334155" : "#e2e8f0"}`, background: "transparent", color: "#64748b", cursor: "pointer" }}
-          onMouseEnter={e => { e.currentTarget.style.color = "#3b82f6"; e.currentTarget.style.borderColor = "#3b82f6"; }}
-          onMouseLeave={e => { e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = theme === "dark" ? "#334155" : "#e2e8f0"; }}>
+        <button
+          onClick={downloadAll}
+          className="flex items-center gap-[6px] text-[12px] font-semibold px-[14px] py-[7px] rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 cursor-pointer hover:text-blue-500 hover:border-blue-500"
+        >
           <FileDown size={13} /> Download All
         </button>
       </div>
 
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
-          <thead style={{ position: "sticky", top: 0, zIndex: 10, background: theme === "dark" ? "#1e293b" : "#ffffff" }}>
-            <tr style={{ borderBottom: `2px solid ${theme === "dark" ? "#334155" : "#e2e8f0"}` }}>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse min-w-[600px]">
+          <thead className="sticky top-0 z-10 bg-white dark:bg-slate-800">
+            <tr className="border-b-2 border-slate-200 dark:border-slate-700">
               {["#", "Keyword", "Competition", "Queue Sum", "Avg Orders", "Seller/Order", "Date", ""].map(h => (
-                <th key={h} style={{ textAlign: "left", padding: "11px 16px", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: theme === "dark" ? "#94a3b8" : "#475569", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+                <th key={h} className="text-left px-4 py-[11px] text-[11px] font-bold tracking-[0.08em] text-slate-500 dark:text-slate-400 uppercase whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {sorted.length === 0 && (
-              <tr><td colSpan={8} style={{ textAlign: "center", color: "#64748b", padding: "40px 0", fontSize: 13 }}>No data yet.</td></tr>
+              <tr><td colSpan={8} className="text-center text-slate-500 py-[40px] text-[13px]">No data yet.</td></tr>
             )}
             {sorted.map((r, i) => {
               const isStarred = starredIds.has(r.id);
@@ -78,54 +77,53 @@ export function QueuePage({ history, onDelete, onEdit, theme }: {
                   style={{ background: i % 2 === 0 ? "transparent" : altRow, borderBottom: `1px solid ${theme === "dark" ? "#1e293b" : "#f1f5f9"}` }}
                   onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = rowHov; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = i % 2 === 0 ? "transparent" : altRow; }}>
-                  <td style={{ padding: "12px 16px", color: "#475569", fontSize: 12, fontWeight: 600 }}>{i + 1}</td>
-                  <td style={{ padding: "10px 16px", fontSize: 13, fontWeight: 600, color: tdColor }}>
+                  <td className="px-4 py-3 text-slate-600 text-[12px] font-semibold">{i + 1}</td>
+                  <td className="px-4 py-[10px] text-[13px] font-semibold" style={{ color: tdColor }}>
                     {isEditing ? (
-                      <div style={{ display: "flex", gap: 6 }}>
+                      <div className="flex gap-[6px]">
                         <input autoFocus value={editDraft} onChange={e => setEditDraft(e.target.value)}
                           onKeyDown={e => { if (e.key === "Enter") confirmEdit(r); if (e.key === "Escape") setEditingId(null); }}
-                          style={{ flex: 1, background: theme === "dark" ? "#0f172a" : "#f1f5f9", border: "1px solid #3b82f6", borderRadius: 6, padding: "4px 8px", fontSize: 13, color: tdColor, outline: "none" }}
+                          className="flex-1 rounded-md px-2 py-1 text-[13px] outline-none border border-blue-500"
+                          style={{ background: theme === "dark" ? "#0f172a" : "#f1f5f9", color: tdColor }}
                         />
-                        <button onClick={() => confirmEdit(r)} style={{ background: "#3b82f6", border: "none", borderRadius: 6, color: "#fff", padding: "4px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>✓</button>
-                        <button onClick={() => setEditingId(null)} style={{ background: "none", border: `1px solid ${theme === "dark" ? "#334155" : "#e2e8f0"}`, borderRadius: 6, color: "#64748b", padding: "4px 8px", fontSize: 12, cursor: "pointer" }}>✕</button>
+                        <button onClick={() => confirmEdit(r)} className="bg-blue-500 border-0 rounded-md text-white px-[10px] py-1 text-[12px] font-bold cursor-pointer">✓</button>
+                        <button onClick={() => setEditingId(null)} className="bg-transparent border border-slate-700 dark:border-slate-700 rounded-md text-slate-500 px-2 py-1 text-[12px] cursor-pointer">✕</button>
                       </div>
                     ) : (
-                      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span className="flex items-center gap-[6px]">
                         {isStarred && <Star size={11} fill="#f59e0b" color="#f59e0b" />}
                         {r.keyword}
                       </span>
                     )}
                   </td>
-                  <td style={{ padding: "12px 16px", fontSize: 13, color: subColor, fontVariantNumeric: "tabular-nums" }}>{fmt(r.competition)}</td>
-                  <td style={{ padding: "12px 16px", fontSize: 13, color: subColor }}>{r.queueSum}</td>
-                  <td style={{ padding: "12px 16px", fontSize: 13, color: subColor }}>{r.avgOrders}</td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: spoColor(r.sellerPerOrder, theme), fontVariantNumeric: "tabular-nums" }}>{fmt(r.sellerPerOrder)}</span>
+                  <td className="px-4 py-3 text-[13px] tabular-nums text-slate-500 dark:text-slate-400">{fmt(r.competition)}</td>
+                  <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{r.queueSum}</td>
+                  <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{r.avgOrders}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[14px] font-extrabold tabular-nums" style={{ color: spoColor(r.sellerPerOrder, theme) }}>{fmt(r.sellerPerOrder)}</span>
                       <Badge v={r.sellerPerOrder} theme={theme} />
                       <Badge v={r.sellerPerOrder} theme={theme} showAdvice />
                     </div>
                   </td>
-                  <td style={{ padding: "12px 16px", fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}>{r.date}</td>
-                  <td style={{ padding: "12px 10px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <button onClick={() => setStarredIds(s => { const n = new Set(s); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n; })}
+                  <td className="px-4 py-3 text-[12px] text-slate-500 whitespace-nowrap">{r.date}</td>
+                  <td className="px-[10px] py-3">
+                    <div className="flex items-center gap-[2px]">
+                      <button
+                        onClick={() => setStarredIds(s => { const n = new Set(s); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n; })}
                         title={isStarred ? "Unstar" : "Star"}
-                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", padding: 4, borderRadius: 6, color: isStarred ? "#f59e0b" : "#475569" }}
+                        className="bg-transparent border-0 cursor-pointer flex p-1 rounded-md"
+                        style={{ color: isStarred ? "#f59e0b" : "#475569" }}
                         onMouseEnter={e => { if (!isStarred) e.currentTarget.style.color = "#f59e0b"; }}
                         onMouseLeave={e => { if (!isStarred) e.currentTarget.style.color = "#475569"; }}>
                         <Star size={14} fill={isStarred ? "#f59e0b" : "none"} />
                       </button>
                       <button onClick={() => { setEditingId(r.id); setEditDraft(r.keyword); }} title="Edit keyword"
-                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", padding: 4, borderRadius: 6, color: "#475569" }}
-                        onMouseEnter={e => { e.currentTarget.style.color = "#3b82f6"; }}
-                        onMouseLeave={e => { e.currentTarget.style.color = "#475569"; }}>
+                        className="bg-transparent border-0 cursor-pointer flex p-1 rounded-md text-slate-600 hover:text-blue-500">
                         <Edit3 size={14} />
                       </button>
                       <button onClick={() => onDelete(r.id)} title="Delete"
-                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", padding: 4, borderRadius: 6, color: "#475569" }}
-                        onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; }}
-                        onMouseLeave={e => { e.currentTarget.style.color = "#475569"; }}>
+                        className="bg-transparent border-0 cursor-pointer flex p-1 rounded-md text-slate-600 hover:text-red-400">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -138,8 +136,8 @@ export function QueuePage({ history, onDelete, onEdit, theme }: {
       </div>
 
       {history.length > 0 && (
-        <div style={{ padding: "10px 16px", borderTop: `1px solid ${theme === "dark" ? "#334155" : "#f1f5f9"}` }}>
-          <span style={{ fontSize: 12, color: "#64748b" }}>{history.length} keywords in queue · {[...starredIds].length} starred</span>
+        <div className="px-4 py-[10px] border-t border-slate-100 dark:border-slate-800">
+          <span className="text-[12px] text-slate-500">{history.length} keywords in queue · {[...starredIds].length} starred</span>
         </div>
       )}
     </div>

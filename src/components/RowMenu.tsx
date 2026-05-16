@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Edit3, Copy, FileDown, Trash2 } from "lucide-react";
 import type { Record_, Theme } from "../types";
 
-export function RowMenu({ record, onDelete, onDuplicate, onExport, onEdit, theme }: {
+export function RowMenu({ record, onDelete, onDuplicate, onExport, onEdit, theme: _theme }: {
   record: Record_; onDelete: () => void; onDuplicate: () => void;
   onExport: () => void; onEdit: () => void; theme: Theme;
 }) {
@@ -15,8 +15,8 @@ export function RowMenu({ record, onDelete, onDuplicate, onExport, onEdit, theme
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const menuBg  = theme === "dark" ? "#1e293b" : "#ffffff";
-  const menuBdr = theme === "dark" ? "#334155" : "#e2e8f0";
+  void record;
+
   const items = [
     { icon: <Edit3 size={13}/>,    label: "Edit",       danger: false, action: () => { onEdit();      setOpen(false); } },
     { icon: <Copy size={13}/>,     label: "Duplicate",  danger: false, action: () => { onDuplicate(); setOpen(false); } },
@@ -24,22 +24,26 @@ export function RowMenu({ record, onDelete, onDuplicate, onExport, onEdit, theme
     { icon: <Trash2 size={13}/>,   label: "Delete",     danger: true,  action: () => { onDelete();    setOpen(false); } },
   ];
 
-  // suppress unused warning — record is kept for potential future use
-  void record;
-
   return (
-    <div ref={ref} style={{ position: "relative" }}>
-      <button onClick={() => setOpen(o => !o)}
-        style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", padding: "4px 6px", borderRadius: 6, display: "flex" }}>
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="bg-transparent border-0 cursor-pointer text-slate-500 px-[6px] py-1 rounded-md flex hover:text-slate-300 dark:hover:text-slate-300"
+      >
         ···
       </button>
       {open && (
-        <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 100, background: menuBg, border: `1px solid ${menuBdr}`, borderRadius: 10, boxShadow: "0 10px 40px rgba(0,0,0,0.3)", minWidth: 150, overflow: "hidden" }}>
+        <div className="absolute right-0 top-[calc(100%+4px)] z-[100] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[10px] shadow-[0_10px_40px_rgba(0,0,0,0.3)] min-w-[150px] overflow-hidden">
           {items.map(item => (
-            <button key={item.label} onClick={item.action}
-              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: item.danger ? "#f87171" : (theme === "dark" ? "#e2e8f0" : "#0f172a"), textAlign: "left" }}
-              onMouseEnter={e => { e.currentTarget.style.background = theme === "dark" ? "#334155" : "#f1f5f9"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
+            <button
+              key={item.label}
+              onClick={item.action}
+              className={[
+                "w-full flex items-center gap-[10px] px-[14px] py-[9px] bg-transparent border-0 cursor-pointer text-[13px] text-left",
+                "hover:bg-slate-100 dark:hover:bg-slate-700",
+                item.danger ? "text-red-400" : "text-slate-900 dark:text-slate-200",
+              ].join(" ")}
+            >
               {item.icon} {item.label}
             </button>
           ))}

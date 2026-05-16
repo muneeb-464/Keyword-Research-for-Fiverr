@@ -1,31 +1,88 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@custom-variant dark (&:where(.dark, .dark *));
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  transition: background 0.3s, color 0.3s;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Dark theme */
-body.dark  { background: #0f172a; color: #e2e8f0; }
-body.light { background: #f1f5f9; color: #0f172a; }
+/* Theme */
+body.dark {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+body.light {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Root */
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 
-/* Input autofill fix */
-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #1e293b inset !important; -webkit-text-fill-color: #e2e8f0 !important; }
-body.light input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #f8fafc inset !important; -webkit-text-fill-color: #0f172a !important; }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-/* Smooth transitions */
-* { transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s; }
-button { transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s; }
-button:active { transform: scale(0.97); }
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 999px;
+}
 
-#root { width: 100%; min-height: 100vh; }
+body.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+/* Autofill Fix */
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #1e293b inset !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+body.light input:-webkit-autofill,
+body.light textarea:-webkit-autofill,
+body.light select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+/* Base Layer */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  button {
+    cursor: pointer;
+  }
+}
+
+/* Smooth UI only */
+@layer utilities {
+  .smooth-transition {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+}

@@ -6,11 +6,10 @@ export function Badge({ v, theme, showAdvice }: { v: number; theme: Theme; showA
   const l = spoLabel(v);
   if (!l) return null;
   return (
-    <span style={{
-      fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
-      background: c + "22", color: c, border: `1px solid ${c}50`,
-      whiteSpace: "nowrap",
-    }}>
+    <span
+      className="text-[10px] font-bold px-2 py-[2px] rounded-[20px] border whitespace-nowrap"
+      style={{ background: c + "22", color: c, borderColor: c + "50" }}
+    >
       {showAdvice ? spoAdvice(v) : l}
     </span>
   );

@@ -2,7 +2,6 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ComposedChart, Bar, Line, Legend,
 } from "recharts";
-import { card } from "../utils";
 import type { Record_, Theme } from "../types";
 
 export function TrendsPage({ history, theme }: { history: Record_[]; theme: Theme }) {
@@ -24,12 +23,12 @@ export function TrendsPage({ history, theme }: { history: Record_[]; theme: Them
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ ...card(theme), padding: 24 }} tabIndex={-1}>
-        <p style={{ fontSize: 15, fontWeight: 700, color: headColor, marginBottom: 4 }}>Seller / Order Trend</p>
-        <p style={{ fontSize: 12, color: "#64748b", marginBottom: 20 }}>Lower = better market opportunity</p>
+    <div className="flex flex-col gap-4">
+      <div className="rounded-2xl border bg-white border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:shadow-none outline-none p-6" tabIndex={-1}>
+        <p className="text-[15px] font-bold mb-1" style={{ color: headColor }}>Seller / Order Trend</p>
+        <p className="text-[12px] text-slate-500 mb-5">Lower = better market opportunity</p>
         {data.length < 2 ? (
-          <p style={{ textAlign: "center", color: "#64748b", padding: "40px 0", fontSize: 13 }}>Need at least 2 saved analyses.</p>
+          <p className="text-center text-slate-500 py-10 text-[13px]">Need at least 2 saved analyses.</p>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
@@ -54,9 +53,9 @@ export function TrendsPage({ history, theme }: { history: Record_[]; theme: Them
       </div>
 
       {data.length >= 2 && (
-        <div style={{ ...card(theme), padding: 24 }} tabIndex={-1}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: headColor, marginBottom: 4 }}>Competition vs Seller/Order</p>
-          <p style={{ fontSize: 12, color: "#64748b", marginBottom: 20 }}>Bars = Competition (left) · Line = Seller/Order (right)</p>
+        <div className="rounded-2xl border bg-white border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:shadow-none outline-none p-6" tabIndex={-1}>
+          <p className="text-[15px] font-bold mb-1" style={{ color: headColor }}>Competition vs Seller/Order</p>
+          <p className="text-[12px] text-slate-500 mb-5">Bars = Competition (left) · Line = Seller/Order (right)</p>
           <ResponsiveContainer width="100%" height={220}>
             <ComposedChart data={data} margin={{ top: 10, right: 40, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />

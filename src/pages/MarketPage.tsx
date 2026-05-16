@@ -1,6 +1,6 @@
 import { BarChart2, TrendingUp, TrendingDown, List, Zap } from "lucide-react";
 import { StatCard } from "../components/StatCard";
-import { fmt, card } from "../utils";
+import { fmt } from "../utils";
 import { useIsMobile } from "../hooks/useIsMobile";
 import type { Record_, Theme } from "../types";
 
@@ -9,41 +9,46 @@ export function MarketPage({ history, theme }: { history: Record_[]; theme: Them
   const avg   = history.length ? Math.round(history.reduce((a, b) => a + b.sellerPerOrder, 0) / history.length) : 0;
   const best  = history.length ? history.reduce((a, b) => a.sellerPerOrder < b.sellerPerOrder ? a : b) : null;
   const worst = history.length ? history.reduce((a, b) => a.sellerPerOrder > b.sellerPerOrder ? a : b) : null;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 14 }}>
+    <div className="flex flex-col gap-4">
+      <div className={`grid gap-[14px] ${isMobile ? "grid-cols-2" : "grid-cols-4"}`}>
         <StatCard label="Keywords Analyzed"    value={history.length} theme={theme} icon={<BarChart2 size={14}/>} />
         <StatCard label="Avg Seller / Order"   value={avg}            theme={theme} icon={<TrendingDown size={14}/>} />
         <StatCard label="Total Orders Tracked" value={history.reduce((a, b) => a + b.queueSum, 0)} theme={theme} icon={<List size={14}/>} />
         <StatCard label="Avg Competition"      value={history.length ? Math.round(history.reduce((a, b) => a + b.competition, 0) / history.length) : 0} theme={theme} icon={<Zap size={14}/>} />
       </div>
+
       {history.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
+        <div className={`grid gap-[14px] ${isMobile ? "grid-cols-1" : "grid-cols-2"}`}>
           {best && (
-            <div style={{ ...card(theme), padding: 20, borderColor: "rgba(34,197,94,0.3)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <div className="rounded-2xl border border-green-500/30 bg-white dark:bg-slate-800 outline-none p-5">
+              <div className="flex items-center gap-2 mb-[10px]">
                 <TrendingDown size={16} color="#22c55e" />
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "#22c55e", textTransform: "uppercase" }}>Best Opportunity</span>
+                <span className="text-[11px] font-bold tracking-[0.1em] text-green-500 uppercase">Best Opportunity</span>
               </div>
-              <p style={{ fontSize: 17, fontWeight: 700, color: theme === "dark" ? "#f1f5f9" : "#0f172a" }}>{best.keyword}</p>
-              <p style={{ fontSize: 30, fontWeight: 800, color: "#22c55e", lineHeight: 1, margin: "8px 0" }}>{fmt(best.sellerPerOrder)}</p>
-              <p style={{ fontSize: 12, color: "#64748b" }}>seller/order · lowest competition intensity</p>
+              <p className="text-[17px] font-bold text-slate-900 dark:text-slate-100">{best.keyword}</p>
+              <p className="text-[30px] font-extrabold text-green-500 leading-none my-2">{fmt(best.sellerPerOrder)}</p>
+              <p className="text-[12px] text-slate-500">seller/order · lowest competition intensity</p>
             </div>
           )}
           {worst && (
-            <div style={{ ...card(theme), padding: 20, borderColor: "rgba(248,113,113,0.25)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <div className="rounded-2xl border border-red-400/25 bg-white dark:bg-slate-800 outline-none p-5">
+              <div className="flex items-center gap-2 mb-[10px]">
                 <TrendingUp size={16} color="#f87171" />
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "#f87171", textTransform: "uppercase" }}>Most Saturated</span>
+                <span className="text-[11px] font-bold tracking-[0.1em] text-red-400 uppercase">Most Saturated</span>
               </div>
-              <p style={{ fontSize: 17, fontWeight: 700, color: theme === "dark" ? "#f1f5f9" : "#0f172a" }}>{worst.keyword}</p>
-              <p style={{ fontSize: 30, fontWeight: 800, color: "#f87171", lineHeight: 1, margin: "8px 0" }}>{fmt(worst.sellerPerOrder)}</p>
-              <p style={{ fontSize: 12, color: "#64748b" }}>seller/order · high competition intensity</p>
+              <p className="text-[17px] font-bold text-slate-900 dark:text-slate-100">{worst.keyword}</p>
+              <p className="text-[30px] font-extrabold text-red-400 leading-none my-2">{fmt(worst.sellerPerOrder)}</p>
+              <p className="text-[12px] text-slate-500">seller/order · high competition intensity</p>
             </div>
           )}
         </div>
       )}
-      {history.length === 0 && <p style={{ textAlign: "center", color: "#64748b", padding: "48px 0", fontSize: 13 }}>Save some analyses first.</p>}
+
+      {history.length === 0 && (
+        <p className="text-center text-slate-500 py-12 text-[13px]">Save some analyses first.</p>
+      )}
     </div>
   );
 }
