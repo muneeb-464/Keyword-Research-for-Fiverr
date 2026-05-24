@@ -1,4 +1,4 @@
-import type { Record_, Theme, Page } from "./types";
+import type { Record_, Theme, Page, Saved_ } from "./types";
 import { calcSPO } from "./utils";
 
 const SEED: Record_[] = [
