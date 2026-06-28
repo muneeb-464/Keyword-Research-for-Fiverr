@@ -1,16 +1,38 @@
-import { useState, useEffect } from "react";
-import { Star, Edit3, Trash2, FileDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Star, Edit3, Trash2, FileDown, FileUp } from "lucide-react";
 import { Badge }  from "../components/Badge";
-import { fmt, spoColor } from "../utils";
+import { fmt, spoColor, uid, fmtDate } from "../utils";
 import * as db from "../lib/db";
 import type { Record_, Theme } from "../types";
 
-export function QueuePage({ history, onDelete, onEdit, theme, userId }: {
+function parseCSV(text: string): Record_[] {
+  const lines = text.trim().split("\n").filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const results: Record_[] = [];
+  for (const line of lines.slice(1)) {
+    const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+    if (cols.length < 5) continue;
+    const keyword = cols[0];
+    const competition = parseInt(cols[1]) || 0;
+    const queueSum = parseInt(cols[2]) || 0;
+    const avgOrders = parseFloat(cols[3]) || 0;
+    const sellerPerOrder = parseFloat(cols[4]) || 0;
+    // date may be split across two cols (e.g. "16-May" + "2026")
+    let date = cols[5] ? cols[5] : fmtDate();
+    if (cols[6] && /^\d{4}$/.test(cols[6])) date = `${cols[5]} ${cols[6]}`;
+    if (!keyword || !competition) continue;
+    results.push({ id: uid(), keyword, competition, queueSum, avgOrders, sellerPerOrder, date });
+  }
+  return results;
+}
+
+export function QueuePage({ history, onDelete, onEdit, theme, userId, onImport }: {
   history: Record_[];
   onDelete: (id: string) => void;
   onEdit: (id: string, newKeyword: string) => void;
   theme: Theme;
   userId?: string;
+  onImport?: (records: Record_[]) => void;
 }) {
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
@@ -32,6 +54,24 @@ export function QueuePage({ history, onDelete, onEdit, theme, userId }: {
   };
   const [editingId, setEditingId]   = useState<string | null>(null);
   const [editDraft, setEditDraft]   = useState("");
+  const [importMsg, setImportMsg]   = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const records = parseCSV(text);
+      if (records.length === 0) { setImportMsg("No valid rows found"); return; }
+      onImport?.(records);
+      setImportMsg(`${records.length} keywords imported`);
+      setTimeout(() => setImportMsg(""), 3000);
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
 
   const sorted  = [...history].sort((a, b) => a.sellerPerOrder - b.sellerPerOrder);
   const altRow  = theme === "dark" ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.015)";
@@ -65,12 +105,24 @@ export function QueuePage({ history, onDelete, onEdit, theme, userId }: {
             All-time keywords · {history.length} total · Ranked best → worst · Never resets
           </p>
         </div>
-        <button
-          onClick={downloadAll}
-          className="flex items-center gap-[6px] text-[12px] font-semibold px-[14px] py-[7px] rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 cursor-pointer hover:text-blue-500 hover:border-blue-500"
-        >
-          <FileDown size={13} /> Download All
-        </button>
+        <div className="flex items-center gap-2">
+          {importMsg && (
+            <span className="text-[12px] text-green-500 font-semibold">{importMsg}</span>
+          )}
+          <input ref={fileRef} type="file" accept=".csv" onChange={handleImport} className="hidden" />
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="flex items-center gap-[6px] text-[12px] font-semibold px-[14px] py-[7px] rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 cursor-pointer hover:text-green-500 hover:border-green-500"
+          >
+            <FileUp size={13} /> Import CSV
+          </button>
+          <button
+            onClick={downloadAll}
+            className="flex items-center gap-[6px] text-[12px] font-semibold px-[14px] py-[7px] rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 cursor-pointer hover:text-blue-500 hover:border-blue-500"
+          >
+            <FileDown size={13} /> Download All
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

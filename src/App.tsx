@@ -84,6 +84,16 @@ export default function App() {
     db.upsertKeyword(user!.id, r).catch(console.error);
   });
 
+  const importRecords = requireAuth((records: Record_[]) => {
+    const newIds = new Set(records.map(r => r.id));
+    setHist(p => [...records, ...p.filter(x => !newIds.has(x.id))]);
+    setAllKw(p => {
+      const existingIds = new Set(p.map(x => x.id));
+      return [...records.filter(r => !existingIds.has(r.id)), ...p];
+    });
+    records.forEach(r => db.upsertKeyword(user!.id, r).catch(console.error));
+  });
+
   const delRec = requireAuth((id: string) => {
     setHist(p => p.filter(x => x.id !== id));
     db.deleteFromHistory(user!.id, id).catch(console.error);
@@ -292,7 +302,7 @@ export default function App() {
               queue={formQueue}    setQueue={setFormQueue}
             />
           )}
-          {page === "queue"   && <QueuePage  history={allKeywords} onDelete={delAllKw} onEdit={editAllKw} theme={theme} userId={user?.id} />}
+          {page === "queue"   && <QueuePage  history={allKeywords} onDelete={delAllKw} onEdit={editAllKw} theme={theme} userId={user?.id} onImport={importRecords} />}
           {page === "saved"   && <SavedPage  saved={saved} onDelete={delStar} theme={theme} />}
           {page === "market"  && <MarketPage history={history} theme={theme} />}
           {page === "history" && <QueuePage  history={allKeywords} onDelete={delAllKw} onEdit={editAllKw} theme={theme} userId={user?.id} />}
