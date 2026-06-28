@@ -1,23 +1,28 @@
-import { useState, useEffect } from "react";
-import { Plus, LayoutGrid, List, Star, BarChart2, Sun, Moon, Menu, X } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Plus, LayoutGrid, List, Star, BarChart2, Sun, Moon, Menu, X, LogOut, LogIn } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 import { NavItem }      from "./components/NavItem";
+import { AuthModal }    from "./components/AuthGate";
 import { AnalyzerPage } from "./pages/AnalyzerPage";
 import { QueuePage }    from "./pages/QueuePage";
 import { SavedPage }    from "./pages/SavedPage";
 import { MarketPage }   from "./pages/MarketPage";
 import { TrendsPage }   from "./pages/TrendsPage";
 import { useIsMobile }  from "./hooks/useIsMobile";
-import {
-  loadHistory, saveHistory, loadAllKeywords, saveAllKeywords,
-  loadTheme, loadPage, savePage, loadSaved, saveSaved,
-} from "./storage";
+import { supabase }     from "./lib/supabase";
+import * as db          from "./lib/db";
+import { loadTheme, loadPage, savePage } from "./storage";
 import type { Record_, Saved_, Page, Theme } from "./types";
 
 export default function App() {
+  const [user, setUser]           = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [showAuth, setShowAuth]   = useState(false);
+
   const [page, setPage_]        = useState<Page>(loadPage);
-  const [history, setHist]      = useState<Record_[]>(loadHistory);
-  const [allKeywords, setAllKw] = useState<Record_[]>(loadAllKeywords);
-  const [saved, setSaved]       = useState<Saved_[]>(loadSaved);
+  const [history, setHist]      = useState<Record_[]>([]);
+  const [allKeywords, setAllKw] = useState<Record_[]>([]);
+  const [saved, setSaved]       = useState<Saved_[]>([]);
   const [theme, setTheme_]      = useState<Theme>(loadTheme);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -27,37 +32,103 @@ export default function App() {
 
   const isMobile = useIsMobile();
 
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthReady(true);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) setShowAuth(false);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ── Load data when user logs in ───────────────────────────────────────────
+  useEffect(() => {
+    if (!user) {
+      setHist([]); setAllKw([]); setSaved([]);
+      return;
+    }
+    db.loadHistory(user.id).then(setHist).catch(console.error);
+    db.loadAllKeywords(user.id).then(setAllKw).catch(console.error);
+    db.loadSaved(user.id).then(setSaved).catch(console.error);
+  }, [user]);
+
+  // ── Theme ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    document.body.className = theme;
+    localStorage.setItem("kp_theme", theme);
+  }, [theme]);
+
+  // ── requireAuth: run action if logged in, else show modal ─────────────────
+  const requireAuth = useCallback(<T extends unknown[]>(fn: (...args: T) => void) => {
+    return (...args: T) => {
+      if (!user) { setShowAuth(true); return; }
+      fn(...args);
+    };
+  }, [user]);
+
+  // ── Navigation ────────────────────────────────────────────────────────────
   const setPage = (p: Page) => {
     setPage_(p);
     savePage(p);
     if (isMobile) setSidebarOpen(false);
   };
 
-  useEffect(() => { document.body.className = theme; localStorage.setItem("kp_theme", theme); }, [theme]);
-  useEffect(() => { saveHistory(history); }, [history]);
-  useEffect(() => { saveAllKeywords(allKeywords); }, [allKeywords]);
-  useEffect(() => { saveSaved(saved); }, [saved]);
-
-  const addRec = (r: Record_) => {
+  // ── Data ops — guest can analyze freely; saving requires login ────────────
+  const addRec = requireAuth((r: Record_) => {
     setHist(p => [r, ...p.filter(x => x.id !== r.id)]);
     setAllKw(p => p.find(x => x.id === r.id) ? p : [r, ...p]);
-  };
-  const delRec    = (id: string) => setHist(p => p.filter(x => x.id !== id));
-  const delAllKw  = (id: string) => setAllKw(p => p.filter(x => x.id !== id));
-  const editAllKw = (id: string, kw: string) => setAllKw(p => p.map(x => x.id === id ? { ...x, keyword: kw } : x));
-  const addStar   = (k: Saved_) => setSaved(p => p.find(x => x.keyword === k.keyword) ? p : [k, ...p]);
-  const delStar   = (id: string) => setSaved(p => p.filter(x => x.id !== id));
+    db.upsertKeyword(user!.id, r).catch(console.error);
+  });
+
+  const delRec = requireAuth((id: string) => {
+    setHist(p => p.filter(x => x.id !== id));
+    db.deleteFromHistory(user!.id, id).catch(console.error);
+  });
+
+  const delAllKw = requireAuth((id: string) => {
+    setAllKw(p => p.filter(x => x.id !== id));
+    db.deleteKeyword(user!.id, id).catch(console.error);
+  });
+
+  const editAllKw = requireAuth((id: string, keyword: string) => {
+    setAllKw(p => p.map(x => x.id === id ? { ...x, keyword } : x));
+    db.updateKeywordName(user!.id, id, keyword).catch(console.error);
+  });
+
+  const addStar = requireAuth((k: Saved_) => {
+    setSaved(p => p.find(x => x.keyword === k.keyword) ? p : [k, ...p]);
+    db.upsertSaved(user!.id, k).catch(console.error);
+  });
+
+  const delStar = requireAuth((id: string) => {
+    setSaved(p => p.filter(x => x.id !== id));
+    db.deleteSaved(user!.id, id).catch(console.error);
+  });
+
+  const resetHistory = requireAuth(() => {
+    setHist([]);
+    setFormKeyword(""); setFormComp(""); setFormQueue([]);
+    setPage("analyzer");
+    db.resetHistory(user!.id).catch(console.error);
+  });
+
   const toggleTheme = () => setTheme_(t => t === "dark" ? "light" : "dark");
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setHist([]); setAllKw([]); setSaved([]);
+  };
 
   const newAnalysis = () => {
     setFormKeyword(""); setFormComp(""); setFormQueue([]);
     setPage("analyzer");
   };
-  const resetHistory = () => {
-    setHist([]); setFormKeyword(""); setFormComp(""); setFormQueue([]);
-    setPage("analyzer");
-  };
 
+  // ── Nav config ────────────────────────────────────────────────────────────
   const topNav = [
     { id: "analyzer" as Page, label: "Dashboard" },
     { id: "history"  as Page, label: "History"   },
@@ -72,10 +143,13 @@ export default function App() {
 
   const sidebarVisible = !isMobile || sidebarOpen;
 
+  if (!authReady) return null;
+
   return (
     <div className="flex h-screen overflow-hidden relative bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-[Inter,system-ui,sans-serif]">
 
-      {/* Mobile backdrop */}
+      <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -83,7 +157,6 @@ export default function App() {
         />
       )}
 
-      {/* Sidebar */}
       {sidebarVisible && (
         <aside className={[
           "w-[216px] min-w-[216px] bg-slate-50 dark:bg-[#131929]",
@@ -120,6 +193,18 @@ export default function App() {
           </nav>
 
           <div className="px-4 pt-3 pb-4 border-t border-slate-200 dark:border-slate-800">
+            {user ? (
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-2 truncate text-center" title={user.email}>
+                {user.email}
+              </p>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="w-full flex items-center justify-center gap-[6px] text-[12px] font-semibold text-blue-500 bg-blue-500/10 border border-blue-500/20 rounded-lg py-[7px] cursor-pointer mb-2"
+              >
+                <LogIn size={13} /> Sign in to save data
+              </button>
+            )}
             <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-[1.7] text-center">
               Designed &amp; Developed by<br/>
               <span className="font-bold">Muhannad Munib Sajjad</span>
@@ -128,10 +213,8 @@ export default function App() {
         </aside>
       )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
-        {/* Topbar */}
         <header className="h-12 bg-slate-50 dark:bg-[#131929] border-b border-slate-200 dark:border-slate-800 flex items-center px-4 gap-1 shrink-0">
 
           {isMobile && (
@@ -165,10 +248,40 @@ export default function App() {
                 : <><Moon size={13}/> <span className="hidden md:inline">Dark</span></>
               }
             </button>
+            {user ? (
+              <button
+                onClick={signOut}
+                title="Sign out"
+                className="flex items-center gap-[5px] bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer text-[12px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-[5px] md:px-3 md:py-[6px]"
+              >
+                <LogOut size={13}/> <span className="hidden md:inline">Sign out</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="flex items-center gap-[5px] bg-blue-500 hover:bg-blue-600 text-white border-0 rounded-lg cursor-pointer text-[12px] font-semibold px-3 py-[6px]"
+              >
+                <LogIn size={13}/> Sign in
+              </button>
+            )}
           </div>
         </header>
 
-        {/* Content */}
+        {/* Guest banner */}
+        {!user && (
+          <div className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-[6px] flex items-center justify-between shrink-0">
+            <span className="text-[12px] text-blue-400">
+              Browsing as guest — analyses not saved.
+            </span>
+            <button
+              onClick={() => setShowAuth(true)}
+              className="text-[12px] font-semibold text-blue-400 underline bg-transparent border-0 cursor-pointer"
+            >
+              Sign in to save
+            </button>
+          </div>
+        )}
+
         <main className="flex-1 overflow-y-auto p-[14px_12px] md:p-[20px_22px]">
           {page === "analyzer" && (
             <AnalyzerPage
@@ -179,14 +292,13 @@ export default function App() {
               queue={formQueue}    setQueue={setFormQueue}
             />
           )}
-          {page === "queue"   && <QueuePage  history={allKeywords} onDelete={delAllKw} onEdit={editAllKw} theme={theme} />}
+          {page === "queue"   && <QueuePage  history={allKeywords} onDelete={delAllKw} onEdit={editAllKw} theme={theme} userId={user?.id} />}
           {page === "saved"   && <SavedPage  saved={saved} onDelete={delStar} theme={theme} />}
           {page === "market"  && <MarketPage history={history} theme={theme} />}
-          {page === "history" && <QueuePage  history={allKeywords} onDelete={delAllKw} onEdit={editAllKw} theme={theme} />}
+          {page === "history" && <QueuePage  history={allKeywords} onDelete={delAllKw} onEdit={editAllKw} theme={theme} userId={user?.id} />}
           {page === "trends"  && <TrendsPage history={history} theme={theme} />}
         </main>
 
-        {/* Footer */}
         <footer className="border-t border-slate-200 dark:border-slate-800 px-5 py-2 text-center text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
           Designed &amp; Developed by <span className="font-bold">Muhannad Munib Sajjad</span>
         </footer>

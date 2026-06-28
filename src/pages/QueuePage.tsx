@@ -2,17 +2,34 @@ import { useState, useEffect } from "react";
 import { Star, Edit3, Trash2, FileDown } from "lucide-react";
 import { Badge }  from "../components/Badge";
 import { fmt, spoColor } from "../utils";
-import { loadStarred, saveStarred } from "../storage";
+import * as db from "../lib/db";
 import type { Record_, Theme } from "../types";
 
-export function QueuePage({ history, onDelete, onEdit, theme }: {
+export function QueuePage({ history, onDelete, onEdit, theme, userId }: {
   history: Record_[];
   onDelete: (id: string) => void;
   onEdit: (id: string, newKeyword: string) => void;
   theme: Theme;
+  userId?: string;
 }) {
-  const [starredIds, setStarredIds] = useState<Set<string>>(loadStarred);
-  useEffect(() => { saveStarred(starredIds); }, [starredIds]);
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!userId) return;
+    db.loadStarred(userId).then(setStarredIds).catch(console.error);
+  }, [userId]);
+
+  const toggleStar = (id: string) => {
+    const next = new Set(starredIds);
+    if (next.has(id)) {
+      next.delete(id);
+      if (userId) db.removeStarred(userId, id).catch(console.error);
+    } else {
+      next.add(id);
+      if (userId) db.addStarred(userId, id).catch(console.error);
+    }
+    setStarredIds(next);
+  };
   const [editingId, setEditingId]   = useState<string | null>(null);
   const [editDraft, setEditDraft]   = useState("");
 
@@ -110,7 +127,7 @@ export function QueuePage({ history, onDelete, onEdit, theme }: {
                   <td className="px-[10px] py-3">
                     <div className="flex items-center gap-[2px]">
                       <button
-                        onClick={() => setStarredIds(s => { const n = new Set(s); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n; })}
+                        onClick={() => toggleStar(r.id)}
                         title={isStarred ? "Unstar" : "Star"}
                         className="bg-transparent border-0 cursor-pointer flex p-1 rounded-md"
                         style={{ color: isStarred ? "#f59e0b" : "#475569" }}

@@ -1,7 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Plus, Save, Download, X, Search, Trash2, Star, BarChart2, Zap, FileDown } from "lucide-react";
 import { TrendingUp } from "lucide-react";
-import { loadStarred, saveStarred } from "../storage";
 import { Badge }    from "../components/Badge";
 import { StatCard } from "../components/StatCard";
 import { KLabel }   from "../components/KLabel";
@@ -25,8 +24,7 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
   const [toast, setToast]           = useState<{ msg: string; ok: boolean } | null>(null);
   const [sortKey, setSortKey]       = useState<SortKey>("date");
   const [search, setSearch]         = useState("");
-  const [starredIds, setStarredIds] = useState<Set<string>>(loadStarred);
-  useEffect(() => { saveStarred(starredIds); }, [starredIds]);
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId]   = useState<string | null>(null);
   const [editDraft, setEditDraft]   = useState("");
   const MAX_Q = 20;
