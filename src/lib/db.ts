@@ -34,6 +34,7 @@ export async function upsertKeyword(userId: string, r: Record_): Promise<void> {
     avg_orders: r.avgOrders,
     seller_per_order: r.sellerPerOrder,
     date: r.date,
+    avg_price: r.avgPrice,
     in_history: true,
   })
   if (error) throw error
@@ -145,6 +146,7 @@ function rowToRecord(row: Record<string, unknown>): Record_ {
     avgOrders: row.avg_orders as number,
     sellerPerOrder: row.seller_per_order as number,
     date: row.date as string,
+    avgPrice: (row.avg_price as number) ?? 0,
   }
 }
 

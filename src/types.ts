@@ -1,7 +1,9 @@
 export interface Record_ {
   id: string; keyword: string; competition: number;
   queueSum: number; avgOrders: number; sellerPerOrder: number; date: string;
+  avgPrice: number;
 }
+export type Trend = "Rising Demand" | "Saturating" | "Declining" | "Stable";
 export interface Saved_ {
   id: string; keyword: string; competition: number;
   sellerPerOrder: number; savedAt: string;

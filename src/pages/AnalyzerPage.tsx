@@ -1,16 +1,17 @@
 import { useState, useCallback } from "react";
-import { Plus, Save, Download, X, Search, Trash2, Star, BarChart2, Zap, FileDown } from "lucide-react";
+import { Plus, Save, Download, X, Search, Trash2, Star, BarChart2, Zap, FileDown, Activity, DollarSign } from "lucide-react";
 import { TrendingUp } from "lucide-react";
 import { Badge }    from "../components/Badge";
 import { StatCard } from "../components/StatCard";
 import { KLabel }   from "../components/KLabel";
 import { KInput }   from "../components/KInput";
 import { RowMenu }  from "../components/RowMenu";
-import { fmt, uid, fmtDate, calcSPO, calcAvg, spoColor } from "../utils";
+import { KeywordDetailModal } from "../components/KeywordDetailModal";
+import { fmt, uid, fmtDate, calcSPO, calcAvg, spoColor, trendTag, trendMeta } from "../utils";
 import type { Record_, Saved_, SortKey, Theme } from "../types";
 
 export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetHistory, theme,
-  keyword, setKeyword, compRaw, setCompRaw, queue, setQueue,
+  keyword, setKeyword, compRaw, setCompRaw, queue, setQueue, avgPriceRaw, setAvgPriceRaw,
 }: {
   history: Record_[]; onSave: (r: Record_) => void;
   onDeleteRecord: (id: string) => void;
@@ -18,6 +19,7 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
   keyword: string; setKeyword: (v: string) => void;
   compRaw: string; setCompRaw: (v: string) => void;
   queue: number[]; setQueue: React.Dispatch<React.SetStateAction<number[]>>;
+  avgPriceRaw: string; setAvgPriceRaw: (v: string) => void;
 }) {
   const [qInput, setQInput]         = useState("");
   const [pinned, setPinned]         = useState<Record_ | null>(null);
@@ -27,6 +29,7 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId]   = useState<string | null>(null);
   const [editDraft, setEditDraft]   = useState("");
+  const [detailKeyword, setDetailKeyword] = useState<string | null>(null);
   const MAX_Q = 20;
 
   const showToast = (msg: string, ok = true) => {
@@ -37,6 +40,7 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
   const queueSum  = queue.reduce((a, b) => a + b, 0);
   const avgOrders = calcAvg(queueSum);
   const spo       = calcSPO(comp, queueSum);
+  const avgPrice  = parseFloat(avgPriceRaw.replace(/,/g, "")) || 0;
 
   const addQ = () => {
     if (queue.length >= MAX_Q) return showToast(`Max ${MAX_Q} inputs allowed`, false);
@@ -46,8 +50,22 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
 
   const buildRec = useCallback((): Record_ | null => {
     if (!keyword.trim() || !comp || queueSum === 0) return null;
-    return { id: uid(), keyword: keyword.trim(), competition: comp, queueSum, avgOrders, sellerPerOrder: spo, date: fmtDate() };
-  }, [keyword, comp, queueSum, avgOrders, spo]);
+    return { id: uid(), keyword: keyword.trim(), competition: comp, queueSum, avgOrders, sellerPerOrder: spo, date: fmtDate(), avgPrice };
+  }, [keyword, comp, queueSum, avgOrders, spo, avgPrice]);
+
+  // previous (older) snapshot of the same keyword, keyed by record id — used for trend tagging
+  const prevByIdMap = new Map<string, Record_ | null>();
+  {
+    const byKeyword = new Map<string, Record_[]>();
+    history.forEach(r => {
+      const arr = byKeyword.get(r.keyword) ?? [];
+      arr.push(r);
+      byKeyword.set(r.keyword, arr);
+    });
+    byKeyword.forEach(arr => {
+      arr.forEach((r, i) => prevByIdMap.set(r.id, arr[i + 1] ?? null));
+    });
+  }
 
   const handleSave = () => {
     const r = buildRec();
@@ -57,8 +75,8 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
 
   const downloadCSV = (records: Record_[], filename: string) => {
     const rows = [
-      ["Keyword", "Competition", "Queue Sum", "Avg Orders", "Seller Per Order", "Date"],
-      ...records.map(r => [r.keyword, r.competition, r.queueSum, r.avgOrders, r.sellerPerOrder, r.date]),
+      ["Keyword", "Competition", "Queue Sum", "Avg Orders", "Avg Price", "Seller Per Order", "Date"],
+      ...records.map(r => [r.keyword, r.competition, r.queueSum, r.avgOrders, r.avgPrice, r.sellerPerOrder, r.date]),
     ];
     const a = Object.assign(document.createElement("a"), {
       href: URL.createObjectURL(new Blob([rows.map(r => r.join(",")).join("\n")], { type: "text/csv" })),
@@ -101,7 +119,7 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
 
         {/* Input card */}
         <div className="rounded-2xl border bg-white border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:shadow-none outline-none p-[22px]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-[18px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-[18px]">
             <div>
               <KLabel>Keyword</KLabel>
               <KInput theme={theme} placeholder="e.g. Logo Design" value={keyword} onChange={e => setKeyword(e.target.value)} />
@@ -109,6 +127,10 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
             <div>
               <KLabel>Competition</KLabel>
               <KInput theme={theme} placeholder="e.g. 24500" value={compRaw} onChange={e => setCompRaw(e.target.value)} />
+            </div>
+            <div>
+              <KLabel>Avg Price ($)</KLabel>
+              <KInput theme={theme} placeholder="e.g. 45" value={avgPriceRaw} onChange={e => setAvgPriceRaw(e.target.value)} />
             </div>
           </div>
 
@@ -166,6 +188,12 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
                 <span className="font-extrabold text-[15px]" style={{ color: spoColor(spo, theme) }}>{fmt(spo)}</span>
                 <span className="ml-[6px]"><Badge v={spo} theme={theme} /></span>
               </div>
+              {avgPrice > 0 && (
+                <div>
+                  <span className="text-slate-500">Avg Price </span>
+                  <span className="font-bold text-slate-900 dark:text-slate-200">${fmt(avgPrice)}</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -233,14 +261,14 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
             <table className="w-full border-collapse min-w-[580px]">
               <thead className="sticky top-0 z-10 bg-white dark:bg-slate-800">
                 <tr className="border-b-2 border-slate-200 dark:border-slate-700">
-                  {["Keyword", "Competition", "Queue Sum", "Avg Orders", "Seller / Order", "Date", ""].map((h, i) => (
+                  {["Keyword", "Competition", "Queue Sum", "Avg Orders", "Avg Price", "Seller / Order", "Trend", "Date", ""].map((h, i) => (
                     <th key={i} className="text-left px-4 py-[11px] text-[11px] font-bold tracking-[0.08em] text-slate-500 dark:text-slate-400 uppercase whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center text-slate-500 py-[40px] text-[13px]">No records found.</td></tr>
+                  <tr><td colSpan={9} className="text-center text-slate-500 py-[40px] text-[13px]">No records found.</td></tr>
                 ) : filtered.map((r, idx) => {
                   const isEditing = editingId === r.id;
                   const isStarred = starredIds.has(r.id);
@@ -270,6 +298,7 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
                       <td className="px-4 py-3 text-[13px] tabular-nums text-slate-500 dark:text-slate-400">{fmt(r.competition)}</td>
                       <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{r.queueSum}</td>
                       <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{r.avgOrders}</td>
+                      <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{r.avgPrice ? `$${fmt(r.avgPrice)}` : "—"}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-[6px] flex-wrap">
                           <span className="text-[14px] font-extrabold tabular-nums" style={{ color: spoColor(r.sellerPerOrder, theme) }}>{fmt(r.sellerPerOrder)}</span>
@@ -277,9 +306,29 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
                           <Badge v={r.sellerPerOrder} theme={theme} showAdvice />
                         </div>
                       </td>
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const p = prevByIdMap.get(r.id);
+                          if (!p) return <span className="text-[11px] font-semibold px-[9px] py-[3px] rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500">New</span>;
+                          const t = trendTag(p, r);
+                          const m = trendMeta(t);
+                          return (
+                            <span className="text-[11px] font-bold px-[9px] py-[3px] rounded-md" style={{ background: `${m.color}1a`, color: m.color }}>
+                              {m.label}
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td className="px-4 py-3 text-[12px] text-slate-500 whitespace-nowrap">{r.date}</td>
                       <td className="px-[10px] py-3">
                         <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setDetailKeyword(r.keyword)}
+                            title="View trend history"
+                            className="bg-transparent border-0 cursor-pointer flex p-1 rounded-md text-slate-500 hover:text-blue-500"
+                          >
+                            <Activity size={14} />
+                          </button>
                           <button
                             onClick={() => { onStar({ id: uid(), keyword: r.keyword, competition: r.competition, sellerPerOrder: r.sellerPerOrder, savedAt: fmtDate() }); setStarredIds(s => new Set([...s, r.id])); }}
                             title={isStarred ? "Saved!" : "Save keyword"}
@@ -294,7 +343,7 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
                             onDuplicate={() => onSave({ ...r, id: uid(), date: fmtDate() })}
                             onEdit={() => { setEditingId(r.id); setEditDraft(r.keyword); }}
                             onExport={() => {
-                              const csv = `Keyword,Competition,Queue Sum,Avg Orders,Seller Per Order,Date\n${r.keyword},${r.competition},${r.queueSum},${r.avgOrders},${r.sellerPerOrder},${r.date}`;
+                              const csv = `Keyword,Competition,Queue Sum,Avg Orders,Avg Price,Seller Per Order,Date\n${r.keyword},${r.competition},${r.queueSum},${r.avgOrders},${r.avgPrice},${r.sellerPerOrder},${r.date}`;
                               const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([csv], { type: "text/csv" })), download: `${r.keyword}.csv` });
                               a.click();
                             }}
@@ -323,6 +372,7 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
           <div className="flex flex-col gap-[10px]">
             <StatCard label="Competition"      value={display?.competition ?? 0}    theme={theme} icon={<BarChart2 size={14}/>} />
             <StatCard label="Avg Orders"       value={display?.avgOrders ?? 0}      theme={theme} icon={<TrendingUp size={14}/>} />
+            <StatCard label="Avg Price"        value={display?.avgPrice ?? 0}       theme={theme} icon={<DollarSign size={14}/>} />
             <StatCard label="Seller Per Order" value={display?.sellerPerOrder ?? 0} theme={theme} accent note="Lower is better (Market intensity)" icon={<Zap size={14}/>} />
           </div>
         </div>
@@ -366,6 +416,15 @@ export function AnalyzerPage({ history, onSave, onDeleteRecord, onStar, onResetH
         ].join(" ")}>
           {toast.msg}
         </div>
+      )}
+
+      {detailKeyword && (
+        <KeywordDetailModal
+          keyword={detailKeyword}
+          history={history}
+          theme={theme}
+          onClose={() => setDetailKeyword(null)}
+        />
       )}
     </div>
   );

@@ -21,7 +21,7 @@ function parseCSV(text: string): Record_[] {
     let date = cols[5] ? cols[5] : fmtDate();
     if (cols[6] && /^\d{4}$/.test(cols[6])) date = `${cols[5]} ${cols[6]}`;
     if (!keyword || !competition) continue;
-    results.push({ id: uid(), keyword, competition, queueSum, avgOrders, sellerPerOrder, date });
+    results.push({ id: uid(), keyword, competition, queueSum, avgOrders, sellerPerOrder, date, avgPrice: 0 });
   }
   return results;
 }

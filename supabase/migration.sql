@@ -10,9 +10,13 @@ CREATE TABLE IF NOT EXISTS keywords (
   avg_orders       NUMERIC(10,2) NOT NULL,
   seller_per_order NUMERIC(10,4) NOT NULL,
   date             TEXT        NOT NULL,
+  avg_price        NUMERIC(10,2) NOT NULL DEFAULT 0,
   in_history       BOOLEAN     NOT NULL DEFAULT TRUE,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- if the table already exists from a previous run, add the new column:
+ALTER TABLE keywords ADD COLUMN IF NOT EXISTS avg_price NUMERIC(10,2) NOT NULL DEFAULT 0;
 
 ALTER TABLE keywords ENABLE ROW LEVEL SECURITY;
 

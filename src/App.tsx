@@ -26,9 +26,10 @@ export default function App() {
   const [theme, setTheme_]      = useState<Theme>(loadTheme);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [formKeyword, setFormKeyword] = useState("");
-  const [formComp, setFormComp]       = useState("");
-  const [formQueue, setFormQueue]     = useState<number[]>([]);
+  const [formKeyword, setFormKeyword]   = useState("");
+  const [formComp, setFormComp]         = useState("");
+  const [formQueue, setFormQueue]       = useState<number[]>([]);
+  const [formAvgPrice, setFormAvgPrice] = useState("");
 
   const isMobile = useIsMobile();
 
@@ -121,7 +122,7 @@ export default function App() {
 
   const resetHistory = requireAuth(() => {
     setHist([]);
-    setFormKeyword(""); setFormComp(""); setFormQueue([]);
+    setFormKeyword(""); setFormComp(""); setFormQueue([]); setFormAvgPrice("");
     setPage("analyzer");
     db.resetHistory(user!.id).catch(console.error);
   });
@@ -134,7 +135,7 @@ export default function App() {
   };
 
   const newAnalysis = () => {
-    setFormKeyword(""); setFormComp(""); setFormQueue([]);
+    setFormKeyword(""); setFormComp(""); setFormQueue([]); setFormAvgPrice("");
     setPage("analyzer");
   };
 
@@ -300,6 +301,7 @@ export default function App() {
               keyword={formKeyword} setKeyword={setFormKeyword}
               compRaw={formComp}   setCompRaw={setFormComp}
               queue={formQueue}    setQueue={setFormQueue}
+              avgPriceRaw={formAvgPrice} setAvgPriceRaw={setFormAvgPrice}
             />
           )}
           {page === "queue"   && <QueuePage  history={allKeywords} onDelete={delAllKw} onEdit={editAllKw} theme={theme} userId={user?.id} onImport={importRecords} />}

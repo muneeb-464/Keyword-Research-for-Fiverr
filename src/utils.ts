@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { Theme } from "./types";
+import type { Record_, Theme, Trend } from "./types";
 
 export const fmt     = (n: number) => n.toLocaleString();
 export const uid     = () => Math.random().toString(36).slice(2, 9);
@@ -39,6 +39,30 @@ export function spoAdvice(v: number) {
   if (v <= 2500) return "Needs Strong SEO";
   if (v <= 4000) return "Avoid if Beginner";
   return "Avoid";
+}
+
+export function pctChange(oldV: number, newV: number): number {
+  if (oldV === 0) return newV === 0 ? 0 : 100;
+  return +(((newV - oldV) / oldV) * 100).toFixed(1);
+}
+
+// prev/curr must be same keyword, prev = older snapshot, curr = newer snapshot
+export function trendTag(prev: Record_, curr: Record_): Trend {
+  const ordersPct = pctChange(prev.avgOrders, curr.avgOrders);
+  const compPct   = pctChange(prev.competition, curr.competition);
+  if (ordersPct < 0)                                return "Declining";
+  if (compPct > ordersPct + 5)                       return "Saturating";
+  if (ordersPct > 0 && Math.abs(compPct) <= 5)       return "Rising Demand";
+  return "Stable";
+}
+
+export function trendMeta(t: Trend) {
+  switch (t) {
+    case "Rising Demand": return { color: "#22c55e", label: "Rising Demand" };
+    case "Saturating":    return { color: "#f59e0b", label: "Saturating" };
+    case "Declining":     return { color: "#ef4444", label: "Declining" };
+    default:              return { color: "#64748b", label: "Stable" };
+  }
 }
 
 function parseExtra(s: string): CSSProperties {
